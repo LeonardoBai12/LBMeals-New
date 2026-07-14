@@ -293,3 +293,87 @@ no empty-space flash while loading.
 `items` — without a stable key, item reuse across a staggered layout can
 mismatch heights on recomposition (e.g. after a search filters the list),
 causing cards to visibly jump.
+
+## 7. Pull-to-refresh that never hijacks the screen
+
+**Problem:** the obvious first implementation is one `isLoading` boolean that
+turns true whenever a sync is in flight. That breaks pull-to-refresh in a
+very visible way: the user pulls down expecting the small spinner gesture
+they just did, and instead the whole screen swaps its content for a
+full-screen loading state — the list they were looking at disappears for no
+reason, since it's still perfectly valid cached data.
+
+**Solution:** two separate flags in state, each answering a different
+question, so a refresh in flight and "there is genuinely nothing to show yet"
+never collapse into the same signal:
+
+```kotlin
+data class CategoriesState(
+    val categories: List<Category> = emptyList(),
+    // Nothing stored while the first emission or a sync is pending. An
+    // empty list by itself never means loading.
+    val isLoading: Boolean = true,
+    val hasSyncFailed: Boolean = false,
+    // A sync the user asked for is running — drives the pull-to-refresh
+    // indicator only.
+    val isRefreshing: Boolean = false,
+)
+```
+
+```kotlin
+// screen content: isLoading only ever short-circuits to the full-screen
+// spinner when there is nothing else to render
+when {
+    state.isLoading -> LBLoading()
+    state.categories.isEmpty() && ... -> LBEmptyState(...)
+    else -> LazyVerticalStaggeredGrid(...) { /* the real content */ }
+}
+```
+
+```kotlin
+// the pull gesture itself only ever toggles isRefreshing
+PullToRefreshBox(
+    isRefreshing = state.isRefreshing,
+    onRefresh = { onEvent(CategoriesEvent.OnRefresh) },
+) { CategoriesContent(state, onEvent, ...) }
+```
+
+Since `categories` already holds the cached list, `state.isLoading` is
+`false` the moment there's anything to show — so pulling to refresh on a
+populated screen always renders the grid underneath the pull gesture's own
+spinner, never `LBLoading()`. The full write-up of *why* `isLoading` can make
+that guarantee (it only looks at the sync status when the database is
+already empty) is in [docs/offline-first.md](offline-first.md#combine-merging-the-read-path-the-sync-status-and-local-ui-flags).
+
+**Second detail, purely visual:** the indicator itself needs to be told where
+to sit. `PullToRefreshBox`'s default indicator is top-aligned to the box's own
+bounds — on these screens that's *behind* the frosted top bar and the
+floating search bar, so left alone it renders half-hidden under them:
+
+```kotlin
+PullToRefreshBox(
+    isRefreshing = state.isRefreshing,
+    onRefresh = { onEvent(CategoriesEvent.OnRefresh) },
+    state = pullState,
+    indicator = {
+        // The box starts behind the frosted bars, so the default
+        // top-aligned indicator would be hidden by them.
+        PullToRefreshDefaults.Indicator(
+            state = pullState,
+            isRefreshing = state.isRefreshing,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = topPadding + SEARCH_BAR_SPACE),
+        )
+    },
+) { /* ... */ }
+```
+
+**Third detail:** the automatic sync fired from the ViewModel's `init` (every
+time the screen is first opened) must never touch `isRefreshing` — only a
+sync started from `OnRefresh` (the pull gesture, or a Retry button) does. See
+[docs/offline-first.md](offline-first.md#sync-on-init-fetch-without-ever-blocking-the-read-path)
+for the `userInitiated` flag that keeps these apart. Without it, opening any
+screen would flash the pull-to-refresh spinner on its own, which reads as the
+UI refreshing itself unprompted — a small thing, but it's exactly the kind of
+detail that makes an app feel handmade instead of assembled.
