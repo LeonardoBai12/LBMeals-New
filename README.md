@@ -37,6 +37,8 @@ Offline-first recipes app built on [TheMealDB](https://www.themealdb.com/api.php
 - A sync failure becomes a snackbar; cached content never disappears.
 - Sync use cases return `Flow<Resource<T>>` (`Loading` → `Success`/`Error`), where `Success` carries what was synced — which is how the ViewModel tells *"empty because nothing exists"* apart from *"empty because data hasn't arrived yet"*. **`Resource` stops at the ViewModel**: a single `when` folds it into plain state fields (`isLoading`, `hasSyncFailed`), so screens only ever see data they can render directly.
 
+Full write-up, with the actual `combine`/`init`/replace-vs-upsert code: [docs/offline-first.md](docs/offline-first.md).
+
 ## Module graph
 
 ```
@@ -73,7 +75,7 @@ This is the third time I build a recipes app on TheMealDB, which makes the codeb
 | HTTP | Retrofit with manual callbacks | Retrofit + coroutines | **Ktor** (Android/Darwin engines) |
 | Persistence | none — network only, category hardcoded to `"Chicken"` | Room, cache-then-network mixed in one flow | **SQLDelight, offline-first**: reads only observe the DB, syncs only write into it |
 | State | `MutableLiveData` mutated from network callbacks | `mutableStateOf` per callback; `Resource` with nullable data | Single immutable `StateFlow<State>` of plain fields; sealed `Resource` (non-null `Success`) lives only between use case and ViewModel — loading only when data is genuinely on its way |
-| UI polish | fixed list | aligned grid, opaque bars | **Staggered masonry grid** respecting image ratios, **frosted-glass bars** (Haze backdrop blur), floating translucent search bar, **collapsing details header**, **YouTube preview card** with the video's real thumbnail, Material You on Android 12+ |
+| UI polish | fixed list | aligned grid, opaque bars | **Staggered masonry grid** respecting image ratios, **frosted-glass bars** (Haze backdrop blur), search bar that hides on scroll, shared element transitions, **collapsing details header** with a fading hero image, **YouTube preview card** with the video's real thumbnail, Material You on Android 12+. Write-up: [docs/ui-experiments.md](docs/ui-experiments.md) |
 | Pull-to-refresh | SwipeRefreshLayout | driven by any sync | Indicator driven only by user-initiated refreshes; the automatic sync on entry never flashes it |
 | Build scripts | Groovy, versions inline | Groovy-era catalog-less scripts | Version catalog + **convention plugins** + Detekt |
 | Tests | template placeholders | 1 unit test | **33 unit tests** (use cases, repositories, ViewModels — events in, state/effects out; MocKMP + Turbine) and **19 instrumented Compose tests** |
