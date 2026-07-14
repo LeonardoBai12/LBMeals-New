@@ -1,0 +1,42 @@
+CREATE TABLE IF NOT EXISTS mealEntity (
+    id TEXT PRIMARY KEY NOT NULL,
+    name TEXT NOT NULL,
+    thumbnailUrl TEXT NOT NULL,
+    category TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_meals_category ON mealEntity(category);
+
+CREATE TABLE IF NOT EXISTS mealDetailsEntity (
+    id TEXT PRIMARY KEY NOT NULL,
+    name TEXT NOT NULL,
+    category TEXT,
+    area TEXT,
+    instructions TEXT NOT NULL,
+    thumbnailUrl TEXT NOT NULL,
+    youtubeUrl TEXT,
+    ingredientsJson TEXT NOT NULL
+);
+
+observeMealsByCategory:
+SELECT * FROM mealEntity
+WHERE category = ?
+ORDER BY name;
+
+insertMeal:
+INSERT OR REPLACE INTO mealEntity(id, name, thumbnailUrl, category)
+VALUES (?, ?, ?, ?);
+
+clearMealsByCategory:
+DELETE FROM mealEntity
+WHERE category = ?;
+
+observeMealDetails:
+SELECT * FROM mealDetailsEntity
+WHERE id = ?;
+
+upsertMealDetails:
+INSERT OR REPLACE INTO mealDetailsEntity(
+    id, name, category, area, instructions, thumbnailUrl, youtubeUrl, ingredientsJson
+)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);

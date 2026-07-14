@@ -1,0 +1,17 @@
+CREATE TABLE IF NOT EXISTS categoryEntity (
+    id TEXT PRIMARY KEY NOT NULL,
+    name TEXT NOT NULL,
+    thumbnailUrl TEXT NOT NULL,
+    description TEXT NOT NULL
+);
+
+observeCategories:
+SELECT * FROM categoryEntity
+ORDER BY name;
+
+insertCategory:
+INSERT OR REPLACE INTO categoryEntity(id, name, thumbnailUrl, description)
+VALUES (?, ?, ?, ?);
+
+clearCategories:
+DELETE FROM categoryEntity;
