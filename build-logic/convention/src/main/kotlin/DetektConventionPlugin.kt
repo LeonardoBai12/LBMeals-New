@@ -14,6 +14,9 @@ class DetektConventionPlugin : Plugin<Project> {
                 config.setFrom(rootProject.files("detekt.yml"))
                 buildUponDefaultConfig = true
                 parallel = true
+                // The default task only scans src/main; point it at the whole
+                // src tree so every KMP source set is validated.
+                source.setFrom(files("src"))
             }
 
             dependencies {

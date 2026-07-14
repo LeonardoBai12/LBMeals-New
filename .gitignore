@@ -1,9 +1,26 @@
+# Gradle / Kotlin
 *.iml
-.gradle
-/local.properties
-.idea
-.DS_Store
+.gradle/
+.kotlin/
 build/
+/local.properties
 /captures
 .externalNativeBuild
 .cxx
+*.hprof
+
+# IDE
+.idea/
+.claude/settings.local.json
+.claw/
+
+# macOS
+.DS_Store
+
+# iOS / Xcode
+xcuserdata/
+DerivedData/
+*.xcuserstate
+*.xcscmblueprint
+Pods/
+iosApp/iosApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
