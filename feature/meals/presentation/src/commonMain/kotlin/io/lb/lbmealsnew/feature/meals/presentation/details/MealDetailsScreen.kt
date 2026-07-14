@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
@@ -63,6 +64,7 @@ private val HEADER_MAX_HEIGHT = 320.dp
 private val HEADER_MIN_HEIGHT = 120.dp
 private const val HEADER_COLLAPSED_ALPHA = 0.4f
 private const val VIDEO_ASPECT_RATIO = 16f / 9f
+private val BOTTOM_SPACER_HEIGHT = 32.dp
 
 /**
  * YouTube's brand red — fixed on both themes, like the brand itself.
@@ -303,6 +305,18 @@ private fun MealDetailsList(
                     onClick = { onEvent(MealDetailsEvent.OnYoutubeClick) },
                 )
             }
+        }
+
+        // Breathing room below the last item: on rounded-corner screens, text
+        // or the video thumbnail would otherwise run right into the curved
+        // edge and the gesture bar.
+        item {
+            Spacer(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .height(BOTTOM_SPACER_HEIGHT),
+            )
         }
     }
 }
