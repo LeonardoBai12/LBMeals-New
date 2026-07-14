@@ -89,8 +89,11 @@ class MealsViewModelTest {
         val viewModel = createViewModel()
 
         viewModel.effects.test {
-            viewModel.onEvent(MealsEvent.OnMealClick("1", "Asado"))
-            assertEquals(MealsEffect.NavigateToDetails("1", "Asado"), awaitItem())
+            viewModel.onEvent(MealsEvent.OnMealClick("1", "Asado", "https://thumb"))
+            assertEquals(
+                MealsEffect.NavigateToDetails("1", "Asado", "https://thumb"),
+                awaitItem(),
+            )
         }
     }
 

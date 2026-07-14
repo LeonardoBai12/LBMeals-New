@@ -85,7 +85,9 @@ class MealsViewModel(
             }
 
             is MealsEvent.OnMealClick -> viewModelScope.launch {
-                _effects.emit(MealsEffect.NavigateToDetails(event.id, event.name))
+                _effects.emit(
+                    MealsEffect.NavigateToDetails(event.id, event.name, event.thumbnailUrl),
+                )
             }
         }
     }

@@ -1,9 +1,11 @@
 package io.lb.lbmealsnew.feature.categories.presentation.navigation
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import io.lb.lbmealsnew.core.designsystem.transition.LocalNavAnimatedVisibilityScope
 import io.lb.lbmealsnew.feature.categories.presentation.CategoriesScreen
 import io.lb.lbmealsnew.feature.categories.presentation.CategoriesViewModel
 import kotlinx.serialization.Serializable
@@ -26,11 +28,13 @@ fun NavGraphBuilder.categoriesScreen(onNavigateToMeals: (String) -> Unit) {
         val viewModel: CategoriesViewModel = koinViewModel()
         val state by viewModel.state.collectAsStateWithLifecycle()
 
-        CategoriesScreen(
-            state = state,
-            onEvent = viewModel::onEvent,
-            effects = viewModel.effects,
-            onNavigateToMeals = onNavigateToMeals,
-        )
+        CompositionLocalProvider(LocalNavAnimatedVisibilityScope provides this) {
+            CategoriesScreen(
+                state = state,
+                onEvent = viewModel::onEvent,
+                effects = viewModel.effects,
+                onNavigateToMeals = onNavigateToMeals,
+            )
+        }
     }
 }

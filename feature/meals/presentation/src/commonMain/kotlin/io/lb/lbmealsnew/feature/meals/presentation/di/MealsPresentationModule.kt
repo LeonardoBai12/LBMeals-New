@@ -14,10 +14,11 @@ val mealsPresentationModule = module {
         )
     }
 
-    viewModel { (mealId: String, mealName: String) ->
+    viewModel { (mealId: String, mealName: String, mealThumbnailUrl: String) ->
         MealDetailsViewModel(
             mealId = mealId,
             mealName = mealName,
+            mealThumbnailUrl = mealThumbnailUrl,
             observeMealDetails = get(),
             refreshMealDetails = get(),
         )

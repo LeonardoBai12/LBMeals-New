@@ -27,6 +27,9 @@ sealed interface MealsEvent {
      *
      * @property id The clicked meal API ID.
      * @property name The clicked meal name.
+     * @property thumbnailUrl The clicked meal thumbnail URL — handed to the
+     * details screen so its header renders instantly from the image the list
+     * already loaded.
      */
-    data class OnMealClick(val id: String, val name: String) : MealsEvent
+    data class OnMealClick(val id: String, val name: String, val thumbnailUrl: String) : MealsEvent
 }

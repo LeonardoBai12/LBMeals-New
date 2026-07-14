@@ -4,7 +4,10 @@ kotlin = "2.3.0"
 ksp = "2.3.6"
 composeMultiplatform = "1.9.3"
 compose-material3-multiplatform = "1.9.0"
-compose = "1.10.0"
+# androidx.compose version matching what Compose Multiplatform 1.9.3 maps to —
+# ui-test-manifest ships inside the debug APK, so a higher version here would
+# drag the whole androidx.compose family above the CMP-managed one.
+compose = "1.9.4"
 androidx-lifecycle = "2.9.6"
 androidx-activityCompose = "1.12.2"
 navigation-compose = "2.9.1"

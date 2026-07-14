@@ -24,6 +24,7 @@ import kotlinx.coroutines.launch
 class MealDetailsViewModel(
     private val mealId: String,
     private val mealName: String,
+    private val mealThumbnailUrl: String,
     observeMealDetails: ObserveMealDetailsUseCase,
     private val refreshMealDetails: RefreshMealDetailsUseCase,
 ) : ViewModel() {
@@ -52,7 +53,9 @@ class MealDetailsViewModel(
         // Nothing stored without a failed sync means the details are still
         // on their way — in flight, or written but not re-emitted yet.
         MealDetailsState(
+            mealId = mealId,
             mealName = details?.name ?: mealName,
+            thumbnailUrl = details?.thumbnailUrl ?: mealThumbnailUrl,
             details = details,
             isLoading = details == null && sync !is Resource.Error,
             hasSyncFailed = details == null && sync is Resource.Error,
@@ -61,7 +64,11 @@ class MealDetailsViewModel(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
-        initialValue = MealDetailsState(mealName = mealName),
+        initialValue = MealDetailsState(
+            mealId = mealId,
+            mealName = mealName,
+            thumbnailUrl = mealThumbnailUrl,
+        ),
     )
 
     private val _effects = MutableSharedFlow<MealDetailsEffect>()

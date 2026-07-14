@@ -1,6 +1,6 @@
 # LBMeals
 
-Offline-first recipes app built on [TheMealDB](https://www.themealdb.com/api.php), running on **Android and iOS from a single Compose Multiplatform codebase**. It is the full rewrite of [LBMeals](https://github.com/leonardobai/LBMeals) — one of my first projects — rebuilt as a reference implementation of a modern multiplatform architecture: feature-sliced modules, Clean Architecture layers, MVI-style unidirectional data flow, SQLDelight as single source of truth, Ktor, Koin, and convention plugins.
+Offline-first recipes app built on [TheMealDB](https://www.themealdb.com/api.php), running on **Android and iOS from a single Compose Multiplatform codebase**. It is the third generation of the same idea: my first app ever, [MyFirstJavaApp](https://github.com/LeonardoBai12/MyFirstJavaApp), consumed this exact API in Java — this rewrite rebuilds it as a reference implementation of a modern multiplatform architecture: feature-sliced modules, Clean Architecture layers, MVI-style unidirectional data flow, SQLDelight as single source of truth, Ktor, Koin, and convention plugins.
 
 ## The offline-first pattern
 
@@ -58,25 +58,26 @@ Rules that keep the graph healthy:
 - **DI is Koin modules per layer** (`factory` for use cases, `single` for repositories/services, `viewModel` with route parameters), aggregated once in `:composeApp`.
 - **Build logic lives in convention plugins** (`build-logic/`): each module's `build.gradle.kts` is a handful of lines, and Detekt (with the formatting ruleset) is applied to every module automatically, scanning all KMP source sets.
 
-## Improvements over the original LBMeals
+## Three generations of the same app
 
-The [original LBMeals](https://github.com/leonardobai/LBMeals) was a single-module Android app. This rewrite keeps the product and rebuilds everything around it:
+This is the third time I build a recipes app on TheMealDB, which makes the codebase an honest measure of evolution — from [MyFirstJavaApp](https://github.com/LeonardoBai12/MyFirstJavaApp), literally the first app I ever wrote, through [LBMeals](https://github.com/LeonardoBai12/LBMeals), to this rewrite:
 
-| | LBMeals (2023) | LBMeals-New |
-|---|---|---|
-| Platforms | Android | **Android + iOS** (Compose Multiplatform) |
-| Modules | 1 (`feature_x` packages) | 13 Gradle modules, api/impl separation |
-| DI | Hilt (kapt) | **Koin** (multiplatform, no codegen) |
-| HTTP | Retrofit | **Ktor** (Android/Darwin engines) |
-| Persistence | Room | **SQLDelight** (typed SQL, native driver on iOS) |
-| Data strategy | cache-then-network mixed in one flow | **offline-first**: reads only observe the DB, syncs only write into it |
-| State | `mutableStateOf` mutated per callback; `Resource` with nullable data | Single immutable `StateFlow<State>` of plain fields per screen; sealed `Resource` (non-null `Success`) lives only between use case and ViewModel — loading only when data is genuinely on its way |
-| UI | aligned fixed grid, opaque bars | **Staggered masonry grid** respecting each image's aspect ratio (with placeholder ratio while Coil loads), **frosted-glass top bar** (backdrop blur via Haze) that content scrolls behind, floating translucent search bar, **collapsing details header** that shrinks and fades on scroll, YouTube-branded action button, Material You dynamic color on Android 12+ |
-| Pull-to-refresh | — | Indicator driven only by user-initiated refreshes; the automatic sync on entry never flashes it |
-| Build scripts | Groovy, versions inline | Version catalog + **convention plugins** + Detekt |
-| Unit tests | 1 | **33** (use cases, repositories and ViewModels — events in, state/effects out) with **MocKMP** (multiplatform mocks) and Turbine |
-| UI tests | template placeholder | **19 instrumented Compose tests** covering every screen state |
-| CI | — | GitHub workflows for code style (Detekt) and unit tests |
+| | [MyFirstJavaApp](https://github.com/LeonardoBai12/MyFirstJavaApp) | [LBMeals](https://github.com/LeonardoBai12/LBMeals) | LBMeals-New |
+|---|---|---|---|
+| Platforms | Android | Android | **Android + iOS** |
+| Language | Java | Kotlin | Kotlin Multiplatform |
+| UI | XML + RecyclerView + AndroidAnnotations | Jetpack Compose | **Compose Multiplatform** |
+| Modules | 1 | 1 (`feature_x` packages) | 13 Gradle modules, api/impl separation |
+| Architecture | Activity-centric: the ViewModel shows `ProgressDialog`/`Toast` itself, views held in `static` fields | MVVM with Clean-ish layers per package | Clean Architecture + MVI-style UDF per feature module |
+| DI | — (AndroidAnnotations codegen) | Hilt (kapt) | **Koin** (multiplatform, no codegen) |
+| HTTP | Retrofit with manual callbacks | Retrofit + coroutines | **Ktor** (Android/Darwin engines) |
+| Persistence | none — network only, category hardcoded to `"Chicken"` | Room, cache-then-network mixed in one flow | **SQLDelight, offline-first**: reads only observe the DB, syncs only write into it |
+| State | `MutableLiveData` mutated from network callbacks | `mutableStateOf` per callback; `Resource` with nullable data | Single immutable `StateFlow<State>` of plain fields; sealed `Resource` (non-null `Success`) lives only between use case and ViewModel — loading only when data is genuinely on its way |
+| UI polish | fixed list | aligned grid, opaque bars | **Staggered masonry grid** respecting image ratios, **frosted-glass bars** (Haze backdrop blur), floating translucent search bar, **collapsing details header**, **YouTube preview card** with the video's real thumbnail, Material You on Android 12+ |
+| Pull-to-refresh | SwipeRefreshLayout | driven by any sync | Indicator driven only by user-initiated refreshes; the automatic sync on entry never flashes it |
+| Build scripts | Groovy, versions inline | Groovy-era catalog-less scripts | Version catalog + **convention plugins** + Detekt |
+| Tests | template placeholders | 1 unit test | **33 unit tests** (use cases, repositories, ViewModels — events in, state/effects out; MocKMP + Turbine) and **19 instrumented Compose tests** |
+| CI | — | — | GitHub workflows for code style (Detekt) and unit tests |
 
 ## Stack
 

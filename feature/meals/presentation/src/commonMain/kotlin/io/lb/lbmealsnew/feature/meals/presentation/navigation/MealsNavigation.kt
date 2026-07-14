@@ -1,10 +1,12 @@
 package io.lb.lbmealsnew.feature.meals.presentation.navigation
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import io.lb.lbmealsnew.core.designsystem.transition.LocalNavAnimatedVisibilityScope
 import io.lb.lbmealsnew.feature.meals.presentation.details.MealDetailsScreen
 import io.lb.lbmealsnew.feature.meals.presentation.details.MealDetailsViewModel
 import io.lb.lbmealsnew.feature.meals.presentation.listing.MealsScreen
@@ -28,9 +30,16 @@ data class MealsRoute(val category: String)
  *
  * @property mealId The meal API ID.
  * @property mealName The meal name, shown as title while details load.
+ * @property mealThumbnailUrl The meal thumbnail URL, shown as header while
+ * details load — the same image the list already rendered, so the shared
+ * element transition has its target from the first frame.
  */
 @Serializable
-data class MealDetailsRoute(val mealId: String, val mealName: String)
+data class MealDetailsRoute(
+    val mealId: String,
+    val mealName: String,
+    val mealThumbnailUrl: String,
+)
 
 /**
  * Wires the meals screen into a nav graph.
@@ -40,7 +49,7 @@ data class MealDetailsRoute(val mealId: String, val mealName: String)
  */
 fun NavGraphBuilder.mealsScreen(
     onNavigateBack: () -> Unit,
-    onNavigateToDetails: (id: String, name: String) -> Unit,
+    onNavigateToDetails: (id: String, name: String, thumbnailUrl: String) -> Unit,
 ) {
     composable<MealsRoute> { backStackEntry ->
         val route = backStackEntry.toRoute<MealsRoute>()
@@ -49,13 +58,15 @@ fun NavGraphBuilder.mealsScreen(
         )
         val state by viewModel.state.collectAsStateWithLifecycle()
 
-        MealsScreen(
-            state = state,
-            onEvent = viewModel::onEvent,
-            effects = viewModel.effects,
-            onNavigateBack = onNavigateBack,
-            onNavigateToDetails = onNavigateToDetails,
-        )
+        CompositionLocalProvider(LocalNavAnimatedVisibilityScope provides this) {
+            MealsScreen(
+                state = state,
+                onEvent = viewModel::onEvent,
+                effects = viewModel.effects,
+                onNavigateBack = onNavigateBack,
+                onNavigateToDetails = onNavigateToDetails,
+            )
+        }
     }
 }
 
@@ -68,15 +79,17 @@ fun NavGraphBuilder.mealDetailsScreen(onNavigateBack: () -> Unit) {
     composable<MealDetailsRoute> { backStackEntry ->
         val route = backStackEntry.toRoute<MealDetailsRoute>()
         val viewModel: MealDetailsViewModel = koinViewModel(
-            parameters = { parametersOf(route.mealId, route.mealName) },
+            parameters = { parametersOf(route.mealId, route.mealName, route.mealThumbnailUrl) },
         )
         val state by viewModel.state.collectAsStateWithLifecycle()
 
-        MealDetailsScreen(
-            state = state,
-            onEvent = viewModel::onEvent,
-            effects = viewModel.effects,
-            onNavigateBack = onNavigateBack,
-        )
+        CompositionLocalProvider(LocalNavAnimatedVisibilityScope provides this) {
+            MealDetailsScreen(
+                state = state,
+                onEvent = viewModel::onEvent,
+                effects = viewModel.effects,
+                onNavigateBack = onNavigateBack,
+            )
+        }
     }
 }

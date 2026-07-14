@@ -35,6 +35,8 @@ import io.lb.lbmealsnew.core.designsystem.components.LBLoading
 import io.lb.lbmealsnew.core.designsystem.components.LBSearchBar
 import io.lb.lbmealsnew.core.designsystem.components.LBThumbnailCard
 import io.lb.lbmealsnew.core.designsystem.components.lbFrostedBarStyle
+import io.lb.lbmealsnew.core.designsystem.transition.lbSharedBounds
+import io.lb.lbmealsnew.core.designsystem.transition.lbSharedElement
 import kotlinx.coroutines.flow.SharedFlow
 
 /**
@@ -57,7 +59,7 @@ fun MealsScreen(
     onEvent: (MealsEvent) -> Unit,
     effects: SharedFlow<MealsEffect>,
     onNavigateBack: () -> Unit,
-    onNavigateToDetails: (id: String, name: String) -> Unit,
+    onNavigateToDetails: (id: String, name: String, thumbnailUrl: String) -> Unit,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val hazeState = remember { HazeState() }
@@ -67,12 +69,16 @@ fun MealsScreen(
             when (effect) {
                 is MealsEffect.ShowSnackBar -> snackbarHostState.showSnackbar(effect.message)
                 MealsEffect.NavigateBack -> onNavigateBack()
-                is MealsEffect.NavigateToDetails -> onNavigateToDetails(effect.id, effect.name)
+                is MealsEffect.NavigateToDetails ->
+                    onNavigateToDetails(effect.id, effect.name, effect.thumbnailUrl)
             }
         }
     }
 
     Scaffold(
+        // Target of the categories screen's container transform: the clicked
+        // category card morphs into this whole screen.
+        modifier = Modifier.lbSharedBounds("category-${state.category}"),
         topBar = {
             TopAppBar(
                 title = { Text(state.category) },
@@ -161,7 +167,11 @@ private fun MealsContent(
                 LBThumbnailCard(
                     title = meal.name,
                     imageUrl = meal.thumbnailUrl,
-                    onClick = { onEvent(MealsEvent.OnMealClick(meal.id, meal.name)) },
+                    onClick = {
+                        onEvent(MealsEvent.OnMealClick(meal.id, meal.name, meal.thumbnailUrl))
+                    },
+                    // The thumbnail morphs into the details screen's header.
+                    imageModifier = Modifier.lbSharedElement("meal-image-${meal.id}"),
                 )
             }
         }

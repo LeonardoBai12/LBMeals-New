@@ -22,6 +22,12 @@ sealed interface MealsEffect {
      *
      * @property id The meal API ID.
      * @property name The meal name, shown as title while details load.
+     * @property thumbnailUrl The meal thumbnail URL, shown as header while
+     * details load.
      */
-    data class NavigateToDetails(val id: String, val name: String) : MealsEffect
+    data class NavigateToDetails(
+        val id: String,
+        val name: String,
+        val thumbnailUrl: String,
+    ) : MealsEffect
 }

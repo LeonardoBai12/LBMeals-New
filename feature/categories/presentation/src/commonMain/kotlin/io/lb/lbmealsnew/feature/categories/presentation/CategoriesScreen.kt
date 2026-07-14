@@ -30,11 +30,12 @@ import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import io.lb.lbmealsnew.core.designsystem.components.LBEmptyState
+import io.lb.lbmealsnew.core.designsystem.components.LBFloatingCard
 import io.lb.lbmealsnew.core.designsystem.components.LBLoading
 import io.lb.lbmealsnew.core.designsystem.components.LBLogo
 import io.lb.lbmealsnew.core.designsystem.components.LBSearchBar
-import io.lb.lbmealsnew.core.designsystem.components.LBThumbnailCard
 import io.lb.lbmealsnew.core.designsystem.components.lbFrostedBarStyle
+import io.lb.lbmealsnew.core.designsystem.transition.lbSharedBounds
 import kotlinx.coroutines.flow.SharedFlow
 
 /**
@@ -155,10 +156,13 @@ private fun CategoriesContent(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             items(state.categories, key = { it.id }) { category ->
-                LBThumbnailCard(
+                LBFloatingCard(
                     title = category.name,
                     imageUrl = category.thumbnailUrl,
                     onClick = { onEvent(CategoriesEvent.OnCategoryClick(category.name)) },
+                    // Container transform: the card's bounds morph into the
+                    // meals screen it opens.
+                    modifier = Modifier.lbSharedBounds("category-${category.name}"),
                 )
             }
         }

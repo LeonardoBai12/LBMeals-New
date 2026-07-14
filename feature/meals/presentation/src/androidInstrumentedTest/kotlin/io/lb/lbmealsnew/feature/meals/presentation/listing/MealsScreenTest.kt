@@ -33,7 +33,7 @@ class MealsScreenTest {
                 onEvent = onEvent,
                 effects = MutableSharedFlow(),
                 onNavigateBack = {},
-                onNavigateToDetails = { _, _ -> },
+                onNavigateToDetails = { _, _, _ -> },
             )
         }
     }
@@ -105,7 +105,7 @@ class MealsScreenTest {
 
         composeRule.onNodeWithText("Asado").performClick()
 
-        assertEquals(listOf<MealsEvent>(MealsEvent.OnMealClick("42", "Asado")), events)
+        assertEquals(listOf<MealsEvent>(MealsEvent.OnMealClick("42", "Asado", "")), events)
     }
 
     private fun meal(id: String, name: String) = Meal(

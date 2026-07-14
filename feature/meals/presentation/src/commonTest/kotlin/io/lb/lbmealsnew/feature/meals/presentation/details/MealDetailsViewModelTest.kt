@@ -50,6 +50,7 @@ class MealDetailsViewModelTest {
     private fun createViewModel() = MealDetailsViewModel(
         mealId = "42",
         mealName = "Asado",
+        mealThumbnailUrl = "https://thumb",
         observeMealDetails = ObserveMealDetailsUseCase(repository),
         refreshMealDetails = RefreshMealDetailsUseCase(repository),
     )
@@ -63,7 +64,10 @@ class MealDetailsViewModelTest {
         val viewModel = createViewModel()
 
         viewModel.state.test {
-            assertEquals(MealDetailsState(mealName = "Asado"), awaitItem())
+            assertEquals(
+                MealDetailsState(mealId = "42", mealName = "Asado", thumbnailUrl = "https://thumb"),
+                awaitItem(),
+            )
             advanceUntilIdle()
             val state = expectMostRecentItem()
             assertEquals(details, state.details)
