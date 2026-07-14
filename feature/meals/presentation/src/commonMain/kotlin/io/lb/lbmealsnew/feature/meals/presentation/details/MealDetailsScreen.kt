@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -24,12 +25,10 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -50,17 +49,12 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
-import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeEffect
-import dev.chrisbanes.haze.hazeSource
-import io.lb.lbmealsnew.core.designsystem.components.LBBackButton
 import io.lb.lbmealsnew.core.designsystem.components.LBEmptyState
+import io.lb.lbmealsnew.core.designsystem.components.LBFloatingBackButton
 import io.lb.lbmealsnew.core.designsystem.components.LBLoading
 import io.lb.lbmealsnew.core.designsystem.components.LBRemoteImage
-import io.lb.lbmealsnew.core.designsystem.components.lbFrostedBarStyle
 import io.lb.lbmealsnew.core.designsystem.transition.lbSharedElement
 import io.lb.lbmealsnew.feature.meals.domain.model.MealDetails
 import kotlinx.coroutines.flow.SharedFlow
@@ -88,7 +82,6 @@ fun MealDetailsScreen(
     onNavigateBack: () -> Unit,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    val hazeState = remember { HazeState() }
     val uriHandler = LocalUriHandler.current
 
     LaunchedEffect(Unit) {
@@ -101,33 +94,36 @@ fun MealDetailsScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(state.mealName, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                navigationIcon = {
-                    LBBackButton(onClick = { onEvent(MealDetailsEvent.OnBackClick) })
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
-                    scrolledContainerColor = Color.Transparent,
-                ),
-                modifier = Modifier.hazeEffect(state = hazeState, style = lbFrostedBarStyle()),
+    // Surface stands in for the removed Scaffold: it paints the themed
+    // background and provides the matching content color — without it the
+    // window background leaks through and text falls back to black.
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background,
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            PullToRefreshBox(
+                isRefreshing = state.isRefreshing,
+                onRefresh = { onEvent(MealDetailsEvent.OnRefresh) },
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                MealDetailsContent(state, onEvent)
+            }
+
+            // No top bar: the photo owns the whole top of the screen, and
+            // the back button floats over it.
+            LBFloatingBackButton(
+                onClick = { onEvent(MealDetailsEvent.OnBackClick) },
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .statusBarsPadding()
+                    .padding(start = 12.dp, top = 8.dp),
             )
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-    ) { padding ->
-        PullToRefreshBox(
-            isRefreshing = state.isRefreshing,
-            onRefresh = { onEvent(MealDetailsEvent.OnRefresh) },
-            // Unlike the listing screens, the content starts below the bar:
-            // the recipe photo is the hero here and is never occluded.
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .hazeSource(hazeState),
-        ) {
-            MealDetailsContent(state, onEvent)
+
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
         }
     }
 }
@@ -205,15 +201,30 @@ private fun MealDetailsContent(
         when {
             details != null -> MealDetailsList(details, onEvent)
 
-            state.hasSyncFailed -> LBEmptyState(
-                message = "Couldn't load this recipe.\nCheck your connection and try again.",
-                actionLabel = "Retry",
-                onActionClick = { onEvent(MealDetailsEvent.OnRefresh) },
-            )
+            state.hasSyncFailed -> {
+                MealTitle(state.mealName)
+                LBEmptyState(
+                    message = "Couldn't load this recipe.\nCheck your connection and try again.",
+                    actionLabel = "Retry",
+                    onActionClick = { onEvent(MealDetailsEvent.OnRefresh) },
+                )
+            }
 
-            else -> LBLoading()
+            else -> {
+                MealTitle(state.mealName)
+                LBLoading()
+            }
         }
     }
+}
+
+@Composable
+private fun MealTitle(name: String) {
+    Text(
+        text = name,
+        style = MaterialTheme.typography.headlineSmall,
+        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp),
+    )
 }
 
 @Composable
@@ -222,6 +233,12 @@ private fun MealDetailsList(
     onEvent: (MealDetailsEvent) -> Unit,
 ) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
+        // The title scrolls away with the content instead of staying pinned
+        // and costing reading space.
+        item {
+            MealTitle(details.name)
+        }
+
         item {
             Row(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),

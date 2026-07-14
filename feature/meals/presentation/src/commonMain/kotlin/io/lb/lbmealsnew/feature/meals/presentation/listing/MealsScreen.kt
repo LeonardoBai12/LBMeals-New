@@ -1,5 +1,10 @@
 package io.lb.lbmealsnew.feature.meals.presentation.listing
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -24,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.chrisbanes.haze.HazeState
@@ -35,6 +41,7 @@ import io.lb.lbmealsnew.core.designsystem.components.LBLoading
 import io.lb.lbmealsnew.core.designsystem.components.LBSearchBar
 import io.lb.lbmealsnew.core.designsystem.components.LBThumbnailCard
 import io.lb.lbmealsnew.core.designsystem.components.lbFrostedBarStyle
+import io.lb.lbmealsnew.core.designsystem.scroll.rememberHideOnScrollState
 import io.lb.lbmealsnew.core.designsystem.transition.lbSharedBounds
 import io.lb.lbmealsnew.core.designsystem.transition.lbSharedElement
 import kotlinx.coroutines.flow.SharedFlow
@@ -95,8 +102,13 @@ fun MealsScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         val topPadding = padding.calculateTopPadding()
+        val searchBarState = rememberHideOnScrollState()
 
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .nestedScroll(searchBarState.nestedScrollConnection),
+        ) {
             val pullState = rememberPullToRefreshState()
             PullToRefreshBox(
                 isRefreshing = state.isRefreshing,
@@ -120,12 +132,20 @@ fun MealsScreen(
                 MealsContent(state, onEvent, contentTopPadding = topPadding + SEARCH_BAR_SPACE)
             }
 
-            LBSearchBar(
-                query = state.searchQuery,
-                onQueryChange = { onEvent(MealsEvent.OnSearchQueryChange(it)) },
-                placeholder = "Search meals",
+            // Scrolling down tucks the search bar away; scrolling back up
+            // brings it back.
+            AnimatedVisibility(
+                visible = searchBarState.isVisible,
+                enter = fadeIn() + slideInVertically { -it },
+                exit = fadeOut() + slideOutVertically { -it },
                 modifier = Modifier.padding(top = topPadding),
-            )
+            ) {
+                LBSearchBar(
+                    query = state.searchQuery,
+                    onQueryChange = { onEvent(MealsEvent.OnSearchQueryChange(it)) },
+                    placeholder = "Search meals",
+                )
+            }
         }
     }
 }

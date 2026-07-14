@@ -13,6 +13,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 /**
@@ -32,7 +33,9 @@ fun LBSearchBar(
     placeholder: String,
     modifier: Modifier = Modifier,
 ) {
-    val containerColor = MaterialTheme.colorScheme.surface.copy(alpha = CONTAINER_ALPHA)
+    // A tonal step above the background, so the field reads as a field on
+    // plain surfaces too — light gray on light theme, dark gray on dark.
+    val containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = CONTAINER_ALPHA)
     OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,
@@ -58,9 +61,12 @@ fun LBSearchBar(
         },
         singleLine = true,
         shape = MaterialTheme.shapes.large,
+        // Borderless, filled and rounded — the iOS look.
         colors = OutlinedTextFieldDefaults.colors(
             focusedContainerColor = containerColor,
             unfocusedContainerColor = containerColor,
+            focusedBorderColor = Color.Transparent,
+            unfocusedBorderColor = Color.Transparent,
         ),
     )
 }
