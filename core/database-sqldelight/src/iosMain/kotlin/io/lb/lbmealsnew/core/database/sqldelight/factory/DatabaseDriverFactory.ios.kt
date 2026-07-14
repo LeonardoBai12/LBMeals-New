@@ -8,7 +8,7 @@ actual class DatabaseDriverFactory {
     actual fun create(): SqlDriver {
         return NativeSqliteDriver(
             LBMealsDatabase.Schema,
-            "lbmeals.db",
+            "lbmeals_sqldelight.db",
         )
     }
 }

@@ -1,17 +1,11 @@
 package io.lb.lbmealsnew.feature.meals.presentation.details
 
 import app.cash.turbine.test
-import io.lb.lbmealsnew.core.common.Resource
 import io.lb.lbmealsnew.feature.meals.domain.model.Ingredient
 import io.lb.lbmealsnew.feature.meals.domain.model.MealDetails
 import io.lb.lbmealsnew.feature.meals.domain.repository.MealsRepository
 import io.lb.lbmealsnew.feature.meals.domain.usecase.ObserveMealDetailsUseCase
 import io.lb.lbmealsnew.feature.meals.domain.usecase.RefreshMealDetailsUseCase
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -22,6 +16,11 @@ import kotlinx.coroutines.test.setMain
 import org.kodein.mock.Mocker
 import org.kodein.mock.UsesMocks
 import org.kodein.mock.generated.mock
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 @UsesMocks(MealsRepository::class)
 class MealDetailsViewModelTest {
@@ -67,9 +66,8 @@ class MealDetailsViewModelTest {
             assertEquals(MealDetailsState(mealName = "Asado"), awaitItem())
             advanceUntilIdle()
             val state = expectMostRecentItem()
-            val content = state.details
-            assertTrue(content is Resource.Success)
-            assertEquals(details, content.data)
+            assertEquals(details, state.details)
+            assertEquals(false, state.isLoading)
             assertEquals("Asado", state.mealName)
         }
     }
@@ -87,11 +85,11 @@ class MealDetailsViewModelTest {
         viewModel.effects.test {
             viewModel.state.test {
                 advanceUntilIdle()
-                assertTrue(expectMostRecentItem().details is Resource.Error)
+                assertTrue(expectMostRecentItem().hasSyncFailed)
                 cancelAndIgnoreRemainingEvents()
             }
             assertEquals(
-                MealDetailsEffect.ShowSnackbar("Couldn't refresh this recipe"),
+                MealDetailsEffect.ShowSnackBar("Couldn't refresh this recipe"),
                 awaitItem(),
             )
         }

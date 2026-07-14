@@ -10,7 +10,7 @@ sealed interface MealDetailsEffect {
      *
      * @property message The message.
      */
-    data class ShowSnackbar(val message: String) : MealDetailsEffect
+    data class ShowSnackBar(val message: String) : MealDetailsEffect
 
     /**
      * Navigates back to the meals screen.

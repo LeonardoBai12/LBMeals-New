@@ -2,8 +2,24 @@ naming:
   FunctionNaming:
     ignoreAnnotated:
       - 'Composable'
+  # expect/actual files follow the KMP convention of platform suffixes
+  # (Foo.android.kt / Foo.ios.kt), which this rule does not understand.
+  MatchingDeclarationName:
+    active: false
 
 complexity:
   LongParameterList:
     functionThreshold: 12
     constructorThreshold: 12
+  LongMethod:
+    ignoreAnnotated:
+      - 'Composable'
+
+style:
+  MagicNumber:
+    ignorePropertyDeclaration: true
+
+exceptions:
+  TooGenericExceptionThrown:
+    excludes:
+      - '**/commonTest/**'

@@ -47,18 +47,15 @@ class MealDetailsViewModel(
         syncStatus,
         isUserRefreshing,
     ) { details, sync, userRefreshing ->
+        // Resource stops here: it is folded into plain state fields, so
+        // everything above the ViewModel only sees data it can render.
+        // Nothing stored without a failed sync means the details are still
+        // on their way — in flight, or written but not re-emitted yet.
         MealDetailsState(
             mealName = details?.name ?: mealName,
-            details = when {
-                details != null -> Resource.Success(details)
-
-                sync is Resource.Error -> Resource.Error(sync.message)
-
-                // Nothing stored and no failure: either the sync is still in
-                // flight or it stored details the database flow hasn't
-                // re-emitted yet — they are about to arrive.
-                else -> Resource.Loading
-            },
+            details = details,
+            isLoading = details == null && sync !is Resource.Error,
+            hasSyncFailed = details == null && sync is Resource.Error,
             isRefreshing = userRefreshing,
         )
     }.stateIn(
@@ -83,7 +80,7 @@ class MealDetailsViewModel(
             }
 
             MealDetailsEvent.OnYoutubeClick -> viewModelScope.launch {
-                (state.value.details as? Resource.Success)?.data?.youtubeUrl?.let {
+                state.value.details?.youtubeUrl?.let {
                     _effects.emit(MealDetailsEffect.OpenUrl(it))
                 }
             }
@@ -102,7 +99,7 @@ class MealDetailsViewModel(
                     // stays on screen and the error becomes a transient
                     // message. The status only matters when there is no cache
                     // to fall back on.
-                    _effects.emit(MealDetailsEffect.ShowSnackbar("Couldn't refresh this recipe"))
+                    _effects.emit(MealDetailsEffect.ShowSnackBar("Couldn't refresh this recipe"))
                 }
             }
         }

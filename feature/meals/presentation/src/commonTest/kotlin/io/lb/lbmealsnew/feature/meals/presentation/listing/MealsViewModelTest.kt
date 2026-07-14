@@ -1,16 +1,10 @@
 package io.lb.lbmealsnew.feature.meals.presentation.listing
 
 import app.cash.turbine.test
-import io.lb.lbmealsnew.core.common.Resource
 import io.lb.lbmealsnew.feature.meals.domain.model.Meal
 import io.lb.lbmealsnew.feature.meals.domain.repository.MealsRepository
 import io.lb.lbmealsnew.feature.meals.domain.usecase.ObserveMealsByCategoryUseCase
 import io.lb.lbmealsnew.feature.meals.domain.usecase.RefreshMealsByCategoryUseCase
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -21,6 +15,11 @@ import kotlinx.coroutines.test.setMain
 import org.kodein.mock.Mocker
 import org.kodein.mock.UsesMocks
 import org.kodein.mock.generated.mock
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 @UsesMocks(MealsRepository::class)
 class MealsViewModelTest {
@@ -59,9 +58,8 @@ class MealsViewModelTest {
             assertEquals(MealsState(category = "Beef"), awaitItem())
             advanceUntilIdle()
             val state = expectMostRecentItem()
-            val content = state.meals
-            assertTrue(content is Resource.Success)
-            assertEquals(meals, content.data)
+            assertEquals(meals, state.meals)
+            assertEquals(false, state.isLoading)
         }
     }
 
@@ -78,9 +76,7 @@ class MealsViewModelTest {
             viewModel.onEvent(MealsEvent.OnSearchQueryChange("asado"))
             advanceUntilIdle()
             val state = expectMostRecentItem()
-            val content = state.meals
-            assertTrue(content is Resource.Success)
-            assertEquals(listOf("Asado"), content.data.map { it.name })
+            assertEquals(listOf("Asado"), state.meals.map { it.name })
         }
     }
 
@@ -125,10 +121,10 @@ class MealsViewModelTest {
         viewModel.effects.test {
             viewModel.state.test {
                 advanceUntilIdle()
-                assertTrue(expectMostRecentItem().meals is Resource.Error)
+                assertTrue(expectMostRecentItem().hasSyncFailed)
                 cancelAndIgnoreRemainingEvents()
             }
-            assertEquals(MealsEffect.ShowSnackbar("Couldn't refresh meals"), awaitItem())
+            assertEquals(MealsEffect.ShowSnackBar("Couldn't refresh meals"), awaitItem())
         }
     }
 }

@@ -9,6 +9,12 @@ import io.lb.lbmealsnew.core.network.dto.MealDetailsDto
 import io.lb.lbmealsnew.core.network.dto.MealDto
 import io.lb.lbmealsnew.core.network.dto.MealLookupResponse
 import io.lb.lbmealsnew.core.network.dto.MealsResponse
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.runTest
+import org.kodein.mock.Mocker
+import org.kodein.mock.UsesMocks
+import org.kodein.mock.generated.mock
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -16,12 +22,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.runTest
-import org.kodein.mock.Mocker
-import org.kodein.mock.UsesMocks
-import org.kodein.mock.generated.mock
 
 @UsesMocks(MealDbService::class, MealsDatabaseService::class)
 class MealsRepositoryImplTest {

@@ -2,16 +2,16 @@ package io.lb.lbmealsnew.feature.categories.domain.usecase
 
 import io.lb.lbmealsnew.feature.categories.domain.model.Category
 import io.lb.lbmealsnew.feature.categories.domain.repository.CategoriesRepository
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.kodein.mock.Mocker
 import org.kodein.mock.UsesMocks
 import org.kodein.mock.generated.mock
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 @UsesMocks(CategoriesRepository::class)
 class ObserveCategoriesUseCaseTest {

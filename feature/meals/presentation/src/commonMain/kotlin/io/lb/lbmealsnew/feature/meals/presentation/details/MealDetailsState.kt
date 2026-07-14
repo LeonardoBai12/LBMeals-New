@@ -1,23 +1,26 @@
 package io.lb.lbmealsnew.feature.meals.presentation.details
 
-import io.lb.lbmealsnew.core.common.Resource
 import io.lb.lbmealsnew.feature.meals.domain.model.MealDetails
 
 /**
  * Everything the meal details screen IS right now, as a single immutable
- * object. Survives rotation through the ViewModel's StateFlow.
+ * object of plain fields — the ViewModel folds the sync's `Resource` into
+ * them, so the screen never sees the wrapper.
  *
  * @property mealName Name known from the list screen — lets the title render
  * before the details arrive.
- * @property details The details on their way to the screen: [Resource.Loading]
- * while data is genuinely expected to arrive, [Resource.Error] when the sync
- * failed with nothing cached, and [Resource.Success] once stored details exist.
- * @property isRefreshing Whether a network sync is in flight over content
- * already on screen — drives the pull-to-refresh indicator only; the first
- * load shows the full-screen loading instead.
+ * @property details The stored details; null until the first sync lands.
+ * @property isLoading Whether the details are genuinely expected to arrive:
+ * nothing stored while the first emission or a sync is pending.
+ * @property hasSyncFailed Whether the latest sync failed with nothing stored
+ * to fall back on.
+ * @property isRefreshing Whether a sync the user asked for is running —
+ * drives the pull-to-refresh indicator only.
  */
 data class MealDetailsState(
     val mealName: String = "",
-    val details: Resource<MealDetails> = Resource.Loading,
+    val details: MealDetails? = null,
+    val isLoading: Boolean = true,
+    val hasSyncFailed: Boolean = false,
     val isRefreshing: Boolean = false,
 )

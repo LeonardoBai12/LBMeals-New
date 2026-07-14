@@ -50,11 +50,15 @@ class MealsViewModel(
         searchQuery,
         syncStatus,
         isUserRefreshing,
-    ) { meals, query, sync, userRefreshing ->
+    ) { stored, query, sync, userRefreshing ->
+        // Resource stops here: it is folded into plain state fields, so
+        // everything above the ViewModel only sees data it can render.
         MealsState(
             category = category,
-            meals = mealsResource(meals, query, sync),
+            meals = stored.filter { it.name.contains(query, ignoreCase = true) },
             searchQuery = query,
+            isLoading = stored.isEmpty() && isDataOnItsWay(sync),
+            hasSyncFailed = stored.isEmpty() && sync is Resource.Error,
             isRefreshing = userRefreshing,
         )
     }.stateIn(
@@ -87,35 +91,14 @@ class MealsViewModel(
     }
 
     /**
-     * What the screen should show, given what is stored and how the latest
-     * sync went. Loading is only ever produced while data is genuinely
-     * expected to arrive.
+     * Whether more data is genuinely about to arrive: the sync is still
+     * running, or it succeeded with content the database flow hasn't
+     * re-emitted yet.
      */
-    private fun mealsResource(
-        stored: List<Meal>,
-        query: String,
-        sync: Resource<List<Meal>>,
-    ): Resource<List<Meal>> = when {
-        stored.isNotEmpty() -> Resource.Success(
-            stored.filter { it.name.contains(query, ignoreCase = true) },
-        )
-
-        // Nothing stored: only the sync outcome can tell whether data is on
-        // its way, the fetch failed, or there is genuinely nothing to show.
-        else -> when (sync) {
-            Resource.Loading -> Resource.Loading
-
-            is Resource.Error -> Resource.Error(sync.message)
-
-            is Resource.Success ->
-                if (sync.data.isEmpty()) {
-                    Resource.Success(emptyList())
-                } else {
-                    // The sync stored rows the database flow hasn't re-emitted
-                    // yet — they are about to arrive.
-                    Resource.Loading
-                }
-        }
+    private fun isDataOnItsWay(sync: Resource<List<Meal>>): Boolean = when (sync) {
+        Resource.Loading -> true
+        is Resource.Error -> false
+        is Resource.Success -> sync.data.isNotEmpty()
     }
 
     private fun sync(userInitiated: Boolean) {
@@ -130,7 +113,7 @@ class MealsViewModel(
                     // stays on screen and the error becomes a transient
                     // message. The status only matters when there is no cache
                     // to fall back on.
-                    _effects.emit(MealsEffect.ShowSnackbar("Couldn't refresh meals"))
+                    _effects.emit(MealsEffect.ShowSnackBar("Couldn't refresh meals"))
                 }
             }
         }

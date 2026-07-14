@@ -29,7 +29,6 @@ import androidx.compose.ui.unit.dp
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
-import io.lb.lbmealsnew.core.common.Resource
 import io.lb.lbmealsnew.core.designsystem.components.LBBackButton
 import io.lb.lbmealsnew.core.designsystem.components.LBEmptyState
 import io.lb.lbmealsnew.core.designsystem.components.LBLoading
@@ -66,7 +65,7 @@ fun MealsScreen(
     LaunchedEffect(Unit) {
         effects.collect { effect ->
             when (effect) {
-                is MealsEffect.ShowSnackbar -> snackbarHostState.showSnackbar(effect.message)
+                is MealsEffect.ShowSnackBar -> snackbarHostState.showSnackbar(effect.message)
                 MealsEffect.NavigateBack -> onNavigateBack()
                 is MealsEffect.NavigateToDetails -> onNavigateToDetails(effect.id, effect.name)
             }
@@ -131,41 +130,39 @@ private fun MealsContent(
     onEvent: (MealsEvent) -> Unit,
     contentTopPadding: Dp,
 ) {
-    when (val meals = state.meals) {
-        Resource.Loading -> LBLoading()
+    when {
+        state.isLoading -> LBLoading()
 
-        is Resource.Error -> LBEmptyState(
+        state.meals.isEmpty() && state.searchQuery.isNotBlank() ->
+            LBEmptyState(message = "No meals match \"${state.searchQuery}\"")
+
+        state.meals.isEmpty() && state.hasSyncFailed -> LBEmptyState(
             message = "No meals yet.\nCheck your connection and try again.",
             actionLabel = "Retry",
             onActionClick = { onEvent(MealsEvent.OnRefresh) },
         )
 
-        is Resource.Success -> when {
-            meals.data.isEmpty() && state.searchQuery.isNotBlank() ->
-                LBEmptyState(message = "No meals match \"${state.searchQuery}\"")
+        state.meals.isEmpty() ->
+            LBEmptyState(message = "No meals in this category yet.")
 
-            meals.data.isEmpty() ->
-                LBEmptyState(message = "No meals in this category yet.")
-
-            else -> LazyVerticalStaggeredGrid(
-                columns = StaggeredGridCells.Fixed(2),
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    start = 16.dp,
-                    end = 16.dp,
-                    top = contentTopPadding,
-                    bottom = 16.dp,
-                ),
-                verticalItemSpacing = 16.dp,
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                items(meals.data, key = { it.id }) { meal ->
-                    LBThumbnailCard(
-                        title = meal.name,
-                        imageUrl = meal.thumbnailUrl,
-                        onClick = { onEvent(MealsEvent.OnMealClick(meal.id, meal.name)) },
-                    )
-                }
+        else -> LazyVerticalStaggeredGrid(
+            columns = StaggeredGridCells.Fixed(2),
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                end = 16.dp,
+                top = contentTopPadding,
+                bottom = 16.dp,
+            ),
+            verticalItemSpacing = 16.dp,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            items(state.meals, key = { it.id }) { meal ->
+                LBThumbnailCard(
+                    title = meal.name,
+                    imageUrl = meal.thumbnailUrl,
+                    onClick = { onEvent(MealsEvent.OnMealClick(meal.id, meal.name)) },
+                )
             }
         }
     }

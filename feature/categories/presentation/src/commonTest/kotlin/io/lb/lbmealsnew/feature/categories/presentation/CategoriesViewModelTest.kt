@@ -1,16 +1,10 @@
 package io.lb.lbmealsnew.feature.categories.presentation
 
 import app.cash.turbine.test
-import io.lb.lbmealsnew.core.common.Resource
 import io.lb.lbmealsnew.feature.categories.domain.model.Category
 import io.lb.lbmealsnew.feature.categories.domain.repository.CategoriesRepository
 import io.lb.lbmealsnew.feature.categories.domain.usecase.ObserveCategoriesUseCase
 import io.lb.lbmealsnew.feature.categories.domain.usecase.RefreshCategoriesUseCase
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.flowOf
@@ -22,6 +16,11 @@ import kotlinx.coroutines.test.setMain
 import org.kodein.mock.Mocker
 import org.kodein.mock.UsesMocks
 import org.kodein.mock.generated.mock
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 @UsesMocks(CategoriesRepository::class)
 class CategoriesViewModelTest {
@@ -59,9 +58,8 @@ class CategoriesViewModelTest {
             assertEquals(CategoriesState(), awaitItem())
             advanceUntilIdle()
             val state = expectMostRecentItem()
-            val content = state.categories
-            assertTrue(content is Resource.Success)
-            assertEquals(categories, content.data)
+            assertEquals(categories, state.categories)
+            assertEquals(false, state.isLoading)
         }
     }
 
@@ -78,9 +76,7 @@ class CategoriesViewModelTest {
             viewModel.onEvent(CategoriesEvent.OnSearchQueryChange("des"))
             advanceUntilIdle()
             val state = expectMostRecentItem()
-            val content = state.categories
-            assertTrue(content is Resource.Success)
-            assertEquals(listOf("Dessert"), content.data.map { it.name })
+            assertEquals(listOf("Dessert"), state.categories.map { it.name })
             assertEquals("des", state.searchQuery)
         }
     }
@@ -110,12 +106,11 @@ class CategoriesViewModelTest {
         viewModel.effects.test {
             viewModel.state.test {
                 advanceUntilIdle()
-                val state = expectMostRecentItem()
-                assertTrue(state.categories is Resource.Error)
+                assertTrue(expectMostRecentItem().hasSyncFailed)
                 cancelAndIgnoreRemainingEvents()
             }
             assertEquals(
-                CategoriesEffect.ShowSnackbar("Couldn't refresh categories"),
+                CategoriesEffect.ShowSnackBar("Couldn't refresh categories"),
                 awaitItem(),
             )
         }

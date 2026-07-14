@@ -5,7 +5,6 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import io.lb.lbmealsnew.core.common.Resource
 import io.lb.lbmealsnew.core.designsystem.components.TEST_TAG_LB_LOADING
 import io.lb.lbmealsnew.feature.meals.domain.model.Ingredient
 import io.lb.lbmealsnew.feature.meals.domain.model.MealDetails
@@ -40,7 +39,7 @@ class MealDetailsScreenTest {
 
     @Test
     fun loading_showsLoadingIndicator_andKnownMealName() {
-        renderScreen(MealDetailsState(mealName = "Asado", details = Resource.Loading))
+        renderScreen(MealDetailsState(mealName = "Asado"))
 
         composeRule.onNodeWithTag(TEST_TAG_LB_LOADING).assertIsDisplayed()
         composeRule.onNodeWithText("Asado").assertIsDisplayed()
@@ -48,7 +47,7 @@ class MealDetailsScreenTest {
 
     @Test
     fun error_showsRetryEmptyState() {
-        renderScreen(MealDetailsState(mealName = "Asado", details = Resource.Error()))
+        renderScreen(MealDetailsState(mealName = "Asado", isLoading = false, hasSyncFailed = true))
 
         composeRule
             .onNodeWithText("Couldn't load this recipe.", substring = true)
@@ -60,7 +59,7 @@ class MealDetailsScreenTest {
     fun error_retryClick_sendsRefreshEvent() {
         val events = mutableListOf<MealDetailsEvent>()
         renderScreen(
-            MealDetailsState(mealName = "Asado", details = Resource.Error()),
+            MealDetailsState(mealName = "Asado", isLoading = false, hasSyncFailed = true),
             onEvent = events::add,
         )
 
@@ -71,7 +70,7 @@ class MealDetailsScreenTest {
 
     @Test
     fun success_showsDetailsContent() {
-        renderScreen(MealDetailsState(mealName = "Asado", details = Resource.Success(details())))
+        renderScreen(MealDetailsState(mealName = "Asado", details = details(), isLoading = false))
 
         composeRule.onNodeWithText("Ingredients").assertIsDisplayed()
         composeRule.onNodeWithText("Flank steak").assertIsDisplayed()
@@ -85,7 +84,7 @@ class MealDetailsScreenTest {
     fun success_withYoutubeUrl_youtubeClick_sendsEvent() {
         val events = mutableListOf<MealDetailsEvent>()
         renderScreen(
-            MealDetailsState(mealName = "Asado", details = Resource.Success(details())),
+            MealDetailsState(mealName = "Asado", details = details(), isLoading = false),
             onEvent = events::add,
         )
 

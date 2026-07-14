@@ -10,7 +10,7 @@ sealed interface CategoriesEffect {
      *
      * @property message The message.
      */
-    data class ShowSnackbar(val message: String) : CategoriesEffect
+    data class ShowSnackBar(val message: String) : CategoriesEffect
 
     /**
      * Navigates to the meals screen of a category.

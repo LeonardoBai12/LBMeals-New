@@ -5,7 +5,6 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import io.lb.lbmealsnew.core.common.Resource
 import io.lb.lbmealsnew.core.designsystem.components.TEST_TAG_LB_LOADING
 import io.lb.lbmealsnew.feature.categories.domain.model.Category
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -40,14 +39,14 @@ class CategoriesScreenTest {
 
     @Test
     fun loading_showsLoadingIndicator() {
-        renderScreen(CategoriesState(categories = Resource.Loading))
+        renderScreen(CategoriesState())
 
         composeRule.onNodeWithTag(TEST_TAG_LB_LOADING).assertIsDisplayed()
     }
 
     @Test
     fun error_showsRetryEmptyState() {
-        renderScreen(CategoriesState(categories = Resource.Error()))
+        renderScreen(CategoriesState(isLoading = false, hasSyncFailed = true))
 
         composeRule
             .onNodeWithText("No categories yet.", substring = true)
@@ -58,7 +57,7 @@ class CategoriesScreenTest {
     @Test
     fun error_retryClick_sendsRefreshEvent() {
         val events = mutableListOf<CategoriesEvent>()
-        renderScreen(CategoriesState(categories = Resource.Error()), onEvent = events::add)
+        renderScreen(CategoriesState(isLoading = false, hasSyncFailed = true), onEvent = events::add)
 
         composeRule.onNodeWithText("Retry").performClick()
 
@@ -67,7 +66,7 @@ class CategoriesScreenTest {
 
     @Test
     fun successEmpty_showsEmptyMessage_notLoadingNorError() {
-        renderScreen(CategoriesState(categories = Resource.Success(emptyList())))
+        renderScreen(CategoriesState(isLoading = false))
 
         composeRule.onNodeWithText("No categories available.").assertIsDisplayed()
         composeRule.onNodeWithTag(TEST_TAG_LB_LOADING).assertDoesNotExist()
@@ -76,12 +75,7 @@ class CategoriesScreenTest {
 
     @Test
     fun successEmpty_withSearchQuery_showsNoMatchMessage() {
-        renderScreen(
-            CategoriesState(
-                categories = Resource.Success(emptyList()),
-                searchQuery = "xyz",
-            ),
-        )
+        renderScreen(CategoriesState(isLoading = false, searchQuery = "xyz"))
 
         composeRule.onNodeWithText("No categories match \"xyz\"").assertIsDisplayed()
     }
@@ -90,7 +84,8 @@ class CategoriesScreenTest {
     fun successWithContent_showsCategories() {
         renderScreen(
             CategoriesState(
-                categories = Resource.Success(listOf(category("1", "Beef"), category("2", "Dessert"))),
+                categories = listOf(category("1", "Beef"), category("2", "Dessert")),
+                isLoading = false,
             ),
         )
 
@@ -102,7 +97,7 @@ class CategoriesScreenTest {
     fun successWithContent_categoryClick_sendsClickEvent() {
         val events = mutableListOf<CategoriesEvent>()
         renderScreen(
-            CategoriesState(categories = Resource.Success(listOf(category("1", "Beef")))),
+            CategoriesState(categories = listOf(category("1", "Beef")), isLoading = false),
             onEvent = events::add,
         )
 

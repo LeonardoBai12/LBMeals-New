@@ -3,10 +3,10 @@ package io.lb.lbmealsnew.feature.meals.presentation.details
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentWidth
@@ -42,15 +42,14 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
-import io.lb.lbmealsnew.core.common.Resource
 import io.lb.lbmealsnew.core.designsystem.components.LBBackButton
 import io.lb.lbmealsnew.core.designsystem.components.LBEmptyState
 import io.lb.lbmealsnew.core.designsystem.components.LBLoading
@@ -87,7 +86,7 @@ fun MealDetailsScreen(
     LaunchedEffect(Unit) {
         effects.collect { effect ->
             when (effect) {
-                is MealDetailsEffect.ShowSnackbar -> snackbarHostState.showSnackbar(effect.message)
+                is MealDetailsEffect.ShowSnackBar -> snackbarHostState.showSnackbar(effect.message)
                 MealDetailsEffect.NavigateBack -> onNavigateBack()
                 is MealDetailsEffect.OpenUrl -> uriHandler.openUri(effect.url)
             }
@@ -120,16 +119,17 @@ fun MealDetailsScreen(
                 .padding(padding)
                 .hazeSource(hazeState),
         ) {
-            when (val details = state.details) {
-                Resource.Loading -> LBLoading()
+            val details = state.details
+            when {
+                details != null -> MealDetailsContent(details, onEvent)
 
-                is Resource.Error -> LBEmptyState(
+                state.hasSyncFailed -> LBEmptyState(
                     message = "Couldn't load this recipe.\nCheck your connection and try again.",
                     actionLabel = "Retry",
                     onActionClick = { onEvent(MealDetailsEvent.OnRefresh) },
                 )
 
-                is Resource.Success -> MealDetailsContent(details.data, onEvent)
+                else -> LBLoading()
             }
         }
     }

@@ -29,7 +29,6 @@ import androidx.compose.ui.unit.dp
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
-import io.lb.lbmealsnew.core.common.Resource
 import io.lb.lbmealsnew.core.designsystem.components.LBEmptyState
 import io.lb.lbmealsnew.core.designsystem.components.LBLoading
 import io.lb.lbmealsnew.core.designsystem.components.LBLogo
@@ -65,7 +64,7 @@ fun CategoriesScreen(
     LaunchedEffect(Unit) {
         effects.collect { effect ->
             when (effect) {
-                is CategoriesEffect.ShowSnackbar ->
+                is CategoriesEffect.ShowSnackBar ->
                     snackbarHostState.showSnackbar(effect.message)
 
                 is CategoriesEffect.NavigateToMeals ->
@@ -129,40 +128,38 @@ private fun CategoriesContent(
     onEvent: (CategoriesEvent) -> Unit,
     contentTopPadding: Dp,
 ) {
-    when (val categories = state.categories) {
-        Resource.Loading -> LBLoading()
+    when {
+        state.isLoading -> LBLoading()
 
-        is Resource.Error -> LBEmptyState(
+        state.categories.isEmpty() && state.searchQuery.isNotBlank() ->
+            LBEmptyState(message = "No categories match \"${state.searchQuery}\"")
+
+        state.categories.isEmpty() && state.hasSyncFailed -> LBEmptyState(
             message = "No categories yet.\nCheck your connection and try again.",
             actionLabel = "Retry",
             onActionClick = { onEvent(CategoriesEvent.OnRefresh) },
         )
 
-        is Resource.Success -> when {
-            categories.data.isEmpty() && state.searchQuery.isNotBlank() ->
-                LBEmptyState(message = "No categories match \"${state.searchQuery}\"")
+        state.categories.isEmpty() -> LBEmptyState(message = "No categories available.")
 
-            categories.data.isEmpty() -> LBEmptyState(message = "No categories available.")
-
-            else -> LazyVerticalStaggeredGrid(
-                columns = StaggeredGridCells.Fixed(2),
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    start = 16.dp,
-                    end = 16.dp,
-                    top = contentTopPadding,
-                    bottom = 16.dp,
-                ),
-                verticalItemSpacing = 16.dp,
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                items(categories.data, key = { it.id }) { category ->
-                    LBThumbnailCard(
-                        title = category.name,
-                        imageUrl = category.thumbnailUrl,
-                        onClick = { onEvent(CategoriesEvent.OnCategoryClick(category.name)) },
-                    )
-                }
+        else -> LazyVerticalStaggeredGrid(
+            columns = StaggeredGridCells.Fixed(2),
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                end = 16.dp,
+                top = contentTopPadding,
+                bottom = 16.dp,
+            ),
+            verticalItemSpacing = 16.dp,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            items(state.categories, key = { it.id }) { category ->
+                LBThumbnailCard(
+                    title = category.name,
+                    imageUrl = category.thumbnailUrl,
+                    onClick = { onEvent(CategoriesEvent.OnCategoryClick(category.name)) },
+                )
             }
         }
     }
